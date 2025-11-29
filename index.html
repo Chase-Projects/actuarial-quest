@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actuarial Quest - Exam FM Adventure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game">
+        <!-- Particle Background -->
+        <canvas id="particles"></canvas>
+
+        <!-- ========== TITLE SCREEN ========== -->
+        <div id="screen-title" class="screen active">
+            <div class="title-container">
+                <div class="logo">
+                    <span class="logo-icon">📊</span>
+                    <h1>ACTUARIAL<br><span class="gold">QUEST</span></h1>
+                </div>
+                <p class="tagline">Master Exam FM Through Adventure</p>
+                <div class="menu-buttons">
+                    <button class="btn btn-primary" onclick="Game.newGame()">
+                        <span class="btn-icon">⚔️</span> New Game
+                    </button>
+                    <button class="btn btn-secondary" id="btn-continue" onclick="Game.continueGame()" disabled>
+                        <span class="btn-icon">📂</span> Continue
+                    </button>
+                </div>
+                <div class="title-footer">
+                    <span>Time Value of Money</span>
+                    <span>•</span>
+                    <span>Annuities</span>
+                    <span>•</span>
+                    <span>Bonds</span>
+                    <span>•</span>
+                    <span>Duration</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== CHARACTER SELECT ========== -->
+        <div id="screen-character" class="screen">
+            <div class="panel">
+                <h2>Create Your Character</h2>
+
+                <div class="char-section">
+                    <label>Choose Your Avatar</label>
+                    <div class="avatar-grid">
+                        <button class="avatar-btn selected" data-avatar="🧙‍♂️">🧙‍♂️</button>
+                        <button class="avatar-btn" data-avatar="🧙‍♀️">🧙‍♀️</button>
+                        <button class="avatar-btn" data-avatar="🦸‍♂️">🦸‍♂️</button>
+                        <button class="avatar-btn" data-avatar="🦸‍♀️">🦸‍♀️</button>
+                        <button class="avatar-btn" data-avatar="🥷">🥷</button>
+                        <button class="avatar-btn" data-avatar="🧝">🧝</button>
+                    </div>
+                </div>
+
+                <div class="char-section">
+                    <label for="player-name">Your Name</label>
+                    <input type="text" id="player-name" placeholder="Enter name..." maxlength="12">
+                </div>
+
+                <div class="char-section">
+                    <label>Specialization</label>
+                    <div class="class-grid">
+                        <div class="class-card selected" data-class="scholar">
+                            <div class="class-icon">📚</div>
+                            <div class="class-name">Scholar</div>
+                            <div class="class-perk">+15% XP gain</div>
+                        </div>
+                        <div class="class-card" data-class="merchant">
+                            <div class="class-icon">💰</div>
+                            <div class="class-name">Merchant</div>
+                            <div class="class-perk">+15% Gold gain</div>
+                        </div>
+                        <div class="class-card" data-class="warrior">
+                            <div class="class-icon">⚔️</div>
+                            <div class="class-name">Warrior</div>
+                            <div class="class-perk">Deal +20% damage</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-wide" onclick="Game.startAdventure()">
+                    Begin Adventure →
+                </button>
+            </div>
+        </div>
+
+        <!-- ========== MAP SCREEN ========== -->
+        <div id="screen-map" class="screen">
+            <header class="game-header">
+                <div class="player-badge">
+                    <span class="player-avatar" id="header-avatar">🧙‍♂️</span>
+                    <div class="player-details">
+                        <span class="player-name" id="header-name">Hero</span>
+                        <span class="player-level">Lv <span id="header-level">1</span></span>
+                    </div>
+                </div>
+                <div class="stat-bars">
+                    <div class="stat-row">
+                        <span class="stat-icon">❤️</span>
+                        <div class="bar">
+                            <div class="bar-fill bar-hp" id="bar-hp"></div>
+                        </div>
+                        <span class="stat-text" id="text-hp">100/100</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-icon">⭐</span>
+                        <div class="bar">
+                            <div class="bar-fill bar-xp" id="bar-xp"></div>
+                        </div>
+                        <span class="stat-text" id="text-xp">0/100</span>
+                    </div>
+                </div>
+                <div class="currency">
+                    <span class="gold-display">💰 <span id="header-gold">0</span></span>
+                </div>
+            </header>
+
+            <main class="map-container">
+                <div class="world-map">
+                    <!-- Zone 1: Time Value -->
+                    <div class="zone" data-zone="1">
+                        <div class="zone-marker unlocked">
+                            <span class="zone-icon">🏛️</span>
+                        </div>
+                        <div class="zone-label">Time Value Temple</div>
+                        <div class="zone-progress">
+                            <span class="dot" data-level="1"></span>
+                            <span class="dot" data-level="2"></span>
+                            <span class="dot" data-level="3"></span>
+                            <span class="dot boss" data-level="4"></span>
+                        </div>
+                    </div>
+
+                    <!-- Zone 2: Annuities -->
+                    <div class="zone" data-zone="2">
+                        <div class="zone-marker locked">
+                            <span class="zone-icon">🌊</span>
+                        </div>
+                        <div class="zone-label">Annuity Abyss</div>
+                        <div class="zone-progress">
+                            <span class="dot" data-level="1"></span>
+                            <span class="dot" data-level="2"></span>
+                            <span class="dot" data-level="3"></span>
+                            <span class="dot boss" data-level="4"></span>
+                        </div>
+                    </div>
+
+                    <!-- Zone 3: Bonds -->
+                    <div class="zone" data-zone="3">
+                        <div class="zone-marker locked">
+                            <span class="zone-icon">🏔️</span>
+                        </div>
+                        <div class="zone-label">Bond Peaks</div>
+                        <div class="zone-progress">
+                            <span class="dot" data-level="1"></span>
+                            <span class="dot" data-level="2"></span>
+                            <span class="dot" data-level="3"></span>
+                            <span class="dot boss" data-level="4"></span>
+                        </div>
+                    </div>
+
+                    <!-- Zone 4: Duration -->
+                    <div class="zone" data-zone="4">
+                        <div class="zone-marker locked">
+                            <span class="zone-icon">⏳</span>
+                        </div>
+                        <div class="zone-label">Duration Sanctum</div>
+                        <div class="zone-progress">
+                            <span class="dot" data-level="1"></span>
+                            <span class="dot" data-level="2"></span>
+                            <span class="dot" data-level="3"></span>
+                            <span class="dot boss" data-level="4"></span>
+                        </div>
+                    </div>
+
+                    <!-- Zone 5: Final -->
+                    <div class="zone" data-zone="5">
+                        <div class="zone-marker locked">
+                            <span class="zone-icon">👑</span>
+                        </div>
+                        <div class="zone-label">Final Exam</div>
+                        <div class="zone-progress">
+                            <span class="dot boss" data-level="1"></span>
+                        </div>
+                    </div>
+
+                    <!-- Path Lines (SVG) -->
+                    <svg class="map-paths" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path d="M 15,75 Q 30,60 35,50" class="path-line"/>
+                        <path d="M 35,50 Q 45,40 55,35" class="path-line"/>
+                        <path d="M 55,35 Q 65,28 75,22" class="path-line"/>
+                        <path d="M 75,22 Q 82,15 90,10" class="path-line"/>
+                    </svg>
+                </div>
+            </main>
+
+            <footer class="map-footer">
+                <button class="btn btn-icon" onclick="Game.showFormulas()">📖 Formulas</button>
+                <button class="btn btn-icon" onclick="Game.showStats()">📊 Stats</button>
+            </footer>
+        </div>
+
+        <!-- ========== BATTLE SCREEN ========== -->
+        <div id="screen-battle" class="screen">
+            <div class="battle-hud">
+                <div class="battle-info">
+                    <span id="battle-zone">Time Value Temple</span>
+                    <span id="battle-level">Level 1</span>
+                </div>
+                <div class="battle-progress">
+                    Problem <span id="problem-num">1</span> of <span id="problem-total">5</span>
+                </div>
+            </div>
+
+            <div class="battle-arena">
+                <div class="combatant player-side">
+                    <div class="combatant-sprite" id="player-sprite">🧙‍♂️</div>
+                    <div class="combatant-info">
+                        <span class="combatant-name" id="player-battle-name">Hero</span>
+                        <div class="hp-bar">
+                            <div class="hp-fill player-hp" id="player-hp-bar"></div>
+                        </div>
+                        <span class="hp-text" id="player-hp-text">100/100</span>
+                    </div>
+                    <div class="combo-display">
+                        <span class="combo-label">COMBO</span>
+                        <span class="combo-value" id="combo-value">0</span>
+                    </div>
+                </div>
+
+                <div class="vs-badge">⚔️</div>
+
+                <div class="combatant enemy-side">
+                    <div class="combatant-sprite enemy" id="enemy-sprite">👹</div>
+                    <div class="combatant-info">
+                        <span class="combatant-name" id="enemy-name">Goblin</span>
+                        <div class="hp-bar">
+                            <div class="hp-fill enemy-hp" id="enemy-hp-bar"></div>
+                        </div>
+                        <span class="hp-text" id="enemy-hp-text">50/50</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="problem-panel">
+                <div class="problem-header">
+                    <span class="problem-type" id="problem-type">Time Value of Money</span>
+                    <div class="timer">
+                        <div class="timer-bar" id="timer-bar"></div>
+                    </div>
+                </div>
+                <div class="problem-body">
+                    <p class="problem-text" id="problem-text">Loading problem...</p>
+                </div>
+                <div class="answer-area">
+                    <div class="answer-grid" id="answer-options"></div>
+                </div>
+                <div class="battle-tools">
+                    <button class="btn btn-small" onclick="Game.useHint()">💡 Hint (-10g)</button>
+                    <button class="btn btn-small" onclick="Game.showFormulas()">📖 Formulas</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== RESULT OVERLAY ========== -->
+        <div id="overlay-result" class="overlay hidden">
+            <div class="result-card">
+                <div class="result-icon" id="result-icon">✓</div>
+                <h2 class="result-title" id="result-title">Correct!</h2>
+                <p class="result-explanation" id="result-explanation"></p>
+                <div class="result-rewards" id="result-rewards"></div>
+                <button class="btn btn-primary" onclick="Game.nextProblem()">Continue</button>
+            </div>
+        </div>
+
+        <!-- ========== LEVEL COMPLETE OVERLAY ========== -->
+        <div id="overlay-complete" class="overlay hidden">
+            <div class="complete-card">
+                <div class="complete-trophy">🏆</div>
+                <h2>Level Complete!</h2>
+                <div class="complete-stars" id="complete-stars"></div>
+                <div class="complete-stats">
+                    <div class="stat-line"><span>Accuracy</span><span id="stat-accuracy">100%</span></div>
+                    <div class="stat-line"><span>Max Combo</span><span id="stat-combo">0</span></div>
+                    <div class="stat-line"><span>XP Earned</span><span id="stat-xp">0</span></div>
+                    <div class="stat-line"><span>Gold Earned</span><span id="stat-gold">0</span></div>
+                </div>
+                <button class="btn btn-primary" onclick="Game.returnToMap()">Return to Map</button>
+            </div>
+        </div>
+
+        <!-- ========== LEVEL UP OVERLAY ========== -->
+        <div id="overlay-levelup" class="overlay hidden">
+            <div class="levelup-card">
+                <div class="levelup-burst"></div>
+                <h2>LEVEL UP!</h2>
+                <div class="levelup-level">Level <span id="levelup-num">2</span></div>
+                <div class="levelup-rewards">
+                    <div>+20 Max HP</div>
+                    <div>HP Fully Restored!</div>
+                </div>
+                <button class="btn btn-primary" onclick="Game.closeLevelUp()">Awesome!</button>
+            </div>
+        </div>
+
+        <!-- ========== FORMULA MODAL ========== -->
+        <div id="modal-formulas" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📖 Formula Reference</h2>
+                    <button class="modal-close" onclick="Game.closeFormulas()">×</button>
+                </div>
+                <div class="formula-tabs">
+                    <button class="tab active" data-tab="tvm">TVM</button>
+                    <button class="tab" data-tab="annuity">Annuities</button>
+                    <button class="tab" data-tab="bond">Bonds</button>
+                    <button class="tab" data-tab="duration">Duration</button>
+                </div>
+                <div class="formula-list" id="formula-list"></div>
+            </div>
+        </div>
+
+        <!-- ========== STATS MODAL ========== -->
+        <div id="modal-stats" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📊 Your Stats</h2>
+                    <button class="modal-close" onclick="Game.closeStats()">×</button>
+                </div>
+                <div class="stats-grid" id="stats-grid"></div>
+            </div>
+        </div>
+
+        <!-- ========== GAME OVER OVERLAY ========== -->
+        <div id="overlay-gameover" class="overlay hidden">
+            <div class="gameover-card">
+                <div class="gameover-icon">💀</div>
+                <h2>Defeated!</h2>
+                <p>Your HP has been restored. Try again!</p>
+                <button class="btn btn-primary" onclick="Game.returnToMap()">Return to Map</button>
+            </div>
+        </div>
+
+        <!-- Floating text container -->
+        <div id="floating-texts"></div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
