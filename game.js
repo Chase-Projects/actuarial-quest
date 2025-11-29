@@ -2,6 +2,144 @@
 // ACTUARIAL QUEST - EXAM FM RPG
 // =============================================
 
+// =============================================
+// LMS INTEGRATION MODULE
+// =============================================
+const LMS = {
+    apiUrl: 'http://localhost:3847',
+    connected: false,
+    recommendations: null,
+
+    // Topic to LMS concept mapping
+    topicConcepts: {
+        tvm: ['compound-interest', 'effective-rate', 'discount-factor', 'force-of-interest', 'present-value', 'future-value'],
+        annuity: ['annuity-immediate', 'annuity-due', 'perpetuity', 'deferred-annuity', 'annuity-fv'],
+        bond: ['bond-basics', 'bond-price', 'premium-discount', 'book-value', 'yield-to-maturity'],
+        duration: ['macaulay-duration', 'modified-duration', 'convexity', 'price-sensitivity']
+    },
+
+    async checkConnection() {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/health`, {
+                method: 'GET',
+                signal: AbortSignal.timeout(2000)
+            });
+            const data = await response.json();
+            this.connected = data.status === 'ok';
+            if (this.connected) {
+                console.log('LMS connected successfully');
+                this.showConnectionStatus(true);
+                await this.fetchRecommendations();
+            }
+            return this.connected;
+        } catch (err) {
+            this.connected = false;
+            console.log('LMS not available - running in standalone mode');
+            this.showConnectionStatus(false);
+            return false;
+        }
+    },
+
+    showConnectionStatus(connected) {
+        // Update UI to show connection status
+        let indicator = document.getElementById('lms-indicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'lms-indicator';
+            indicator.style.cssText = 'position:fixed;bottom:10px;right:10px;padding:8px 12px;border-radius:20px;font-size:12px;z-index:1000;display:flex;align-items:center;gap:6px;';
+            document.body.appendChild(indicator);
+        }
+
+        if (connected) {
+            indicator.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></span> LMS Connected';
+            indicator.style.background = 'rgba(34, 197, 94, 0.2)';
+            indicator.style.color = '#22c55e';
+            indicator.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+        } else {
+            indicator.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#64748b;"></span> Standalone Mode';
+            indicator.style.background = 'rgba(100, 116, 139, 0.2)';
+            indicator.style.color = '#94a3b8';
+            indicator.style.border = '1px solid rgba(100, 116, 139, 0.3)';
+        }
+    },
+
+    async fetchRecommendations() {
+        if (!this.connected) return null;
+        try {
+            const response = await fetch(`${this.apiUrl}/api/recommendations`);
+            this.recommendations = await response.json();
+            return this.recommendations;
+        } catch (err) {
+            console.error('Failed to fetch recommendations:', err);
+            return null;
+        }
+    },
+
+    async updateMastery(topic, score, wasCorrect) {
+        if (!this.connected) return;
+
+        // Get concepts for this topic
+        const concepts = this.topicConcepts[topic] || [];
+
+        // Update mastery for each related concept
+        for (const conceptId of concepts) {
+            try {
+                await fetch(`${this.apiUrl}/api/mastery/${conceptId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        score: score,
+                        source: 'actuarial-quest',
+                        timestamp: Date.now()
+                    })
+                });
+            } catch (err) {
+                console.error(`Failed to update mastery for ${conceptId}:`, err);
+            }
+        }
+    },
+
+    async getMasteryForTopic(topic) {
+        if (!this.connected) return null;
+        try {
+            const response = await fetch(`${this.apiUrl}/api/mastery`);
+            const allMastery = await response.json();
+            const concepts = this.topicConcepts[topic] || [];
+
+            if (concepts.length === 0) return null;
+
+            let totalMastery = 0;
+            let count = 0;
+            for (const conceptId of concepts) {
+                if (allMastery[conceptId]) {
+                    totalMastery += allMastery[conceptId].level;
+                    count++;
+                }
+            }
+
+            return count > 0 ? Math.round(totalMastery / count) : 0;
+        } catch (err) {
+            return null;
+        }
+    },
+
+    // Get recommendation badge for a zone
+    getZoneRecommendation(topic) {
+        if (!this.recommendations) return null;
+
+        // Check if any concepts in this topic need review
+        const concepts = this.topicConcepts[topic] || [];
+        const needsReview = this.recommendations.needsReview?.some(r => concepts.includes(r.id));
+        const readyToLearn = this.recommendations.readyToLearn?.some(r => concepts.includes(r.id));
+        const inProgress = this.recommendations.inProgress?.some(r => concepts.includes(r.id));
+
+        if (needsReview) return { text: 'Review', color: '#f59e0b' };
+        if (readyToLearn) return { text: 'Ready!', color: '#22c55e' };
+        if (inProgress) return { text: 'Continue', color: '#3b82f6' };
+        return null;
+    }
+};
+
 const Game = {
     // ==========================================
     // STATE
@@ -124,6 +262,8 @@ const Game = {
         this.setupParticles();
         this.setupEventListeners();
         this.loadGame();
+        // Try to connect to LMS (non-blocking)
+        LMS.checkConnection();
     },
 
     setupParticles() {
@@ -619,11 +759,20 @@ const Game = {
                 maxCombo: b.maxCombo
             };
 
+            // Sync mastery with LMS
+            const masteryScore = Math.round(accuracy * 100);
+            LMS.updateMastery(b.topic, masteryScore, true);
+
             this.showLevelComplete(accuracy, b.maxCombo, xpReward, goldReward);
         } else {
             // Defeat - restore half HP
             p.hp = Math.floor(p.maxHp * 0.5);
             document.getElementById('overlay-gameover').classList.remove('hidden');
+
+            // Sync lower mastery with LMS on defeat
+            const accuracy = b.correct / Math.max(1, b.correct + b.wrong);
+            const masteryScore = Math.round(accuracy * 50); // Lower score for defeat
+            LMS.updateMastery(b.topic, masteryScore, false);
         }
 
         this.saveGame();
